@@ -8,6 +8,7 @@ public class Router {
     //fucking hell
 
     private final String routerId;
+    private final List<String> connectedPrefixes;
     private final List<Interface> interfaces;
     private final Map<String, Neighbor> neighbors;
     private final LSDB lsdb;
@@ -16,6 +17,7 @@ public class Router {
 
     public Router(String routerId) {
         this.routerId = routerId;
+        this.connectedPrefixes = new ArrayList<>();
         this.interfaces = new ArrayList<>();
         this.neighbors = new HashMap<>();
         this.lsdb = new LSDB();
@@ -26,6 +28,10 @@ public class Router {
 
     public String getRouterId() {
         return routerId;
+    }
+
+    public List<String> getConnectedPrefixes() {
+        return connectedPrefixes;
     }
 
     public List<Interface> getInterfaces() {
@@ -50,6 +56,10 @@ public class Router {
 
     public boolean isBackbone() {
         return areas.contains(0);
+    }
+
+    public void addPrefix(String prefix) {
+        connectedPrefixes.add(prefix);
     }
 
     public void addInterface(Interface intface) {

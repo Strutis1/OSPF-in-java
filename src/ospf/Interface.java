@@ -6,6 +6,7 @@ import java.util.List;
 public class Interface {
     private final String interfaceId;
     private final String ipAddress;
+    private final String prefix;
     private final String areaId;
     private final int cost;
     private final int helloInterval;//in Seconds
@@ -13,9 +14,10 @@ public class Interface {
     private final List<Neighbor> neighbors;
 
 
-    public Interface(String interfaceId, String ipAddress, String areaId, int cost) {
+    public Interface(String interfaceId, String ipAddress, String prefix, String areaId, int cost) {
         this.interfaceId = interfaceId;
         this.ipAddress = ipAddress;
+        this.prefix = prefix;
         this.areaId = areaId;
         this.cost = cost;
         this.helloInterval = 10;
@@ -23,12 +25,16 @@ public class Interface {
         this.neighbors = new ArrayList<>();
     }
 
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
     public String getInterfaceId() {
         return interfaceId;
     }
 
-    public String getIpAddress() {
-        return ipAddress;
+    public String getPrefix() {
+        return prefix;
     }
 
     public int getCost() {
