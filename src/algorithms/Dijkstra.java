@@ -1,5 +1,6 @@
 package algorithms;
 
+import ospf.Link;
 import ospf.Router;
 
 import java.util.*;
@@ -28,10 +29,12 @@ public class Dijkstra {
             String currentId = current.getRouter().getRouterId();
             distances.put(currentId, current.getDistance());
 
-            Map<String, Integer> neighbors = graph.getAdjacencyList().getOrDefault(currentId, new HashMap<>());
-            for (Map.Entry<String, Integer> entry : neighbors.entrySet()) {
-                String neighborId = entry.getKey();
-                int weight = entry.getValue();
+            List<Link> neighbors = graph.getAdjacencyList().get(currentId);
+            if (neighbors == null) continue;
+
+            for (Link link : neighbors) {
+                String neighborId = link.getDestinationId();
+                int weight = link.getCost();
 
                 GraphNode neighborNode = graph.getNodes().get(neighborId);
                 if (neighborNode == null || neighborNode.isVisited()) continue;

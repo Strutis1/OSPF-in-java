@@ -1,5 +1,7 @@
 package ospf;
 
+import constants.OSPFDefaults;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,8 +22,8 @@ public class Interface {
         this.prefix = prefix;
         this.areaId = areaId;
         this.cost = cost;
-        this.helloInterval = 10;
-        this.deadInterval = 40;
+        this.helloInterval = OSPFDefaults.HELLO_INTERVAL;
+        this.deadInterval = OSPFDefaults.DEAD_INTERVAL;
         this.neighbors = new ArrayList<>();
     }
 

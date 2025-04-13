@@ -7,7 +7,6 @@ import java.util.Map;
 public class RoutingTable {
     private final Map<String, RoutingEntry> entryMap = new HashMap<String, RoutingEntry>();
 
-
     public void addEntry(RoutingEntry entry) {
         entryMap.put(entry.getPrefix(), entry);
     }
@@ -19,4 +18,6 @@ public class RoutingTable {
     public Collection<RoutingEntry> getAllEntries() {
         return entryMap.values();
     }
+
+
 }

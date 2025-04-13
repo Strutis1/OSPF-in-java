@@ -9,7 +9,7 @@ public class GraphNode implements Comparable<GraphNode> {
     private boolean visited;
 
 
-    GraphNode(Router router) {
+    public GraphNode(Router router) {
         this.router = router;
         this.distance = Integer.MAX_VALUE; //initially infinity
         this.previous = null;

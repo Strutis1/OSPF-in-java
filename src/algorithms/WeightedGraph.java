@@ -1,12 +1,16 @@
 package algorithms;
 
+import constants.LinkType;
+import ospf.Link;
 import ospf.Router;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class WeightedGraph {
-    Map<String, Map<String, Integer>> adjacencyList;
+    Map<String, List<Link>> adjacencyList;
     Map<String, GraphNode> nodes;
 
 
@@ -15,12 +19,12 @@ public class WeightedGraph {
         nodes = new HashMap<>();
     }
 
-    public Map<String, Map<String, Integer>> getAdjacencyList() {
+    public Map<String, List<Link>> getAdjacencyList() {
         return adjacencyList;
     }
 
-    public void setAdjacencyList(Map<String, Map<String, Integer>> matrix) {
-        this.adjacencyList = matrix;
+    public void setAdjacencyList(Map<String, List<Link>> adjacencyList) {
+        this.adjacencyList = adjacencyList;
     }
 
     public Map<String, GraphNode> getNodes() {
@@ -32,8 +36,8 @@ public class WeightedGraph {
     }
 
     public void addEdge(String from, String to, int weight) {
-        adjacencyList.putIfAbsent(from, new HashMap<>());
-        adjacencyList.get(from).put(to, weight);
+        adjacencyList.putIfAbsent(from, new ArrayList<>());
+        adjacencyList.get(from).add(new Link(to, weight, LinkType.POINT_TO_POINT));
     }
 
 
