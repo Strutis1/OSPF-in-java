@@ -1,4 +1,4 @@
-package algorithms;
+package helpers;
 
 import ospf.Router;
 

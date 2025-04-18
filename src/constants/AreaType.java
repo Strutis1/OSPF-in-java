@@ -4,5 +4,6 @@ public enum AreaType {
     STUB,
     TOTALLY_STUBBY,
     NSSA,       //not-so-stubby-area(what the fuck are the names?)
-    TOTALLY_NSSA
+    TOTALLY_NSSA,
+    NORMAL
 }

@@ -3,8 +3,8 @@ package constants;
 public enum LinkType {
     POINT_TO_POINT(1),
     TRANSIT(2),
-    STUB(3),
-    VIRTUAL(4);
+    STUB(3), //not using
+    VIRTUAL(4);//not using
 
     private final int value;
 

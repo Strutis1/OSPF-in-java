@@ -1,7 +1,8 @@
 package algorithms;
 
+import helpers.GraphNode;
+import helpers.WeightedGraph;
 import ospf.Link;
-import ospf.Router;
 
 import java.util.*;
 
@@ -17,7 +18,7 @@ public class Dijkstra {
             node.setVisited(false);
         }
 
-        GraphNode sourceNode = graph.nodes.get(sourceId);
+        GraphNode sourceNode = graph.getNodes().get(sourceId);
         sourceNode.setDistance(0);
         queue.add(sourceNode);
         while (!queue.isEmpty()) {

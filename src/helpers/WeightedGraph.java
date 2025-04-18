@@ -1,8 +1,7 @@
-package algorithms;
+package helpers;
 
 import constants.LinkType;
 import ospf.Link;
-import ospf.Router;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -2,6 +2,7 @@ package lsas;
 
 import constants.LSAType;
 import constants.OSPFDefaults;
+import ospf.Router;
 
 public abstract class LSA {
     protected final String advertisingRouterId; //who created lsa
@@ -27,8 +28,11 @@ public abstract class LSA {
     public int getChecksum() { return checksum; }
     public String getAdvertisingRouterId() { return advertisingRouterId; }
 
+    public boolean isNewerThan(LSA other){
+        return this.sequenceNumber > other.getSequenceNumber();
+    }
 
-
+    public abstract void prepare(Router owner);
 
     public void incrementSequenceNumber() {
         this.sequenceNumber++;

@@ -1,4 +1,4 @@
-package ospf;
+package helpers;
 
 public class RoutingEntry {
     private final String prefix;

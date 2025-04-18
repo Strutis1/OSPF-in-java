@@ -1,5 +1,7 @@
 package ospf;
 
+import helpers.RoutingEntry;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
