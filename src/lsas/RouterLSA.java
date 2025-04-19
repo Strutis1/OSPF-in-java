@@ -52,7 +52,13 @@ public class RouterLSA extends LSA {
 
     @Override
     public String toString() {
-        return "RouterLSA: linkStateId=" + linkStateId + ", advertisedBy=" + advertisingRouterId;
+        return "ROUTER_LSA:" + advertisingRouterId + ";" + linkStateId + ";" + age + ";" + checksum;
     }
+
+    public static RouterLSA fromString(String s) {
+        String[] parts = s.split(";");
+        return new RouterLSA(parts[0], parts[1], Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
+    }
+
 
 }

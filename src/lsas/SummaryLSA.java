@@ -38,7 +38,12 @@ public class SummaryLSA extends LSA{
 
     @Override
     public String toString() {
-        return "SummaryLSA [prefix=" + destinationPrefix + ", cost=" + cost +
-                ", advertisedBy=" + advertisingRouterId + "]";
+        return "SUMMARY_LSA:" + advertisingRouterId + ";" + linkStateId + ";" + age + ";" + checksum + ";" + destinationPrefix + ";" + cost;
     }
+
+    public static SummaryLSA fromString(String s) {
+        String[] parts = s.split(";");
+        return new SummaryLSA(parts[0], parts[1], Integer.parseInt(parts[2]), Integer.parseInt(parts[3]), parts[4], Integer.parseInt(parts[5]));
+    }
+
 }

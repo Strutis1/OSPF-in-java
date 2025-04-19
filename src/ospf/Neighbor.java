@@ -9,11 +9,27 @@ public class Neighbor {
     private int priority;
     private long lastHello;
 
+    private String ipAddress;
+    private int port;
+
     public Neighbor(String neighborId, int priority) {
         this.neighborId = neighborId;
         this.state = NeighborState.DOWN;
         this.priority = priority;
         this.lastHello = System.currentTimeMillis();
+    }
+
+    public void setAddress(String ip, int port) {
+        this.ipAddress = ip;
+        this.port = port;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public int getPort() {
+        return port;
     }
 
     public String getNeighborId() {

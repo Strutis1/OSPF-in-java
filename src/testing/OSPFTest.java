@@ -1,9 +1,9 @@
 package testing;
 
-import constants.AreaType;
 import constants.LinkType;
 import ospf.Interface;
-import ospf.*;
+import ospf.Router;
+import lsas.RouterLSA;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,15 +33,28 @@ public class OSPFTest {
         i3.connectTo(i1, 1);
         i3.connectTo(i2, 1);
 
-        Map<String, Integer> allPorts = new HashMap<>();
-        allPorts.put("1.1.1.1", 5001);
-        allPorts.put("2.2.2.2", 5002);
-        allPorts.put("3.3.3.3", 5003);
+        r1.generateRouterLSA();
+        r2.generateRouterLSA();
+        r3.generateRouterLSA();
 
-        Thread.sleep(1000);
+        Map<String, Integer> ports = new HashMap<>();
+        ports.put("1.1.1.1", 5001);
+        ports.put("2.2.2.2", 5002);
+        ports.put("3.3.3.3", 5003);
 
-        i1.broadcastHello(allPorts);
-        i2.broadcastHello(allPorts);
-        i3.broadcastHello(allPorts);
+        System.out.println(" Starting Hello exchange...");
+        r1.sendHello(ports);
+        r2.sendHello(ports);
+        r3.sendHello(ports);
+
+        Thread.sleep(2000);
+
+        System.out.println("DBDesc packets will auto-fire after TWO_WAY from inside HelloPacket.process()");
+        System.out.println(" LSRequest + LSUpdate should follow if any LSAs are missing.");
+
+        Thread.sleep(10000);
+
+        System.out.println("✅ Simulation done.");
+        System.exit(0);
     }
 }

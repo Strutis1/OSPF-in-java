@@ -19,6 +19,9 @@ public abstract class OSPFPacket {
     // limited hop count basically and if reaches zero then BAD
     protected final byte[] payload;
 
+    protected int senderPort;
+    protected String senderIp;
+
 
 
     OSPFPacket(short length, int checksum, PacketType type, int packetId,
@@ -40,6 +43,22 @@ public abstract class OSPFPacket {
 
 
 
+    public void setSenderPort(int port) {
+        this.senderPort = port;
+    }
+
+    public int getSenderPort() {
+        return senderPort;
+    }
+
+    public void setSenderIp(String ip) {
+        this.senderIp = ip;
+    }
+
+    public String getSenderIp() {
+        return senderIp;
+    }
+
 
     public String getSourceIp() {
         return sourceIp;
@@ -48,6 +67,7 @@ public abstract class OSPFPacket {
     public String getDestIp() {
         return destIp;
     }
+
 
     public int getTimeToLive() {
         return timeToLive;

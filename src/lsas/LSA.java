@@ -21,6 +21,18 @@ public abstract class LSA {
         this.checksum = checksum;
     }
 
+    public static LSA fromString(String s) {
+        if (s.startsWith("ROUTER_LSA:")) {
+            return RouterLSA.fromString(s.substring("ROUTER_LSA:".length()));
+        } else if (s.startsWith("NETWORK_LSA:")) {
+            return NetworkLSA.fromString(s.substring("NETWORK_LSA:".length()));
+        } else if (s.startsWith("SUMMARY_LSA:")) {
+            return SummaryLSA.fromString(s.substring("SUMMARY_LSA:".length()));
+        }
+        return null;
+    }
+
+
     public String getLinkStateId() { return linkStateId; }
     public LSAType getType() { return type; }
     public int getAge() { return age; }

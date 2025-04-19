@@ -17,7 +17,6 @@ public class NetworkLSA extends LSA{
         attachedRouters = new ArrayList<String>();
     }
 
-
     @Override
     public void prepare(Router owner) {
         for (Interface iface : owner.getInterfaces()) {
@@ -32,8 +31,16 @@ public class NetworkLSA extends LSA{
 
     @Override
     public String toString() {
-        return "NetworkLSA: linkStateId=" + linkStateId + ", advertisedBy=" + advertisingRouterId;
+        return "NETWORK_LSA:" + advertisingRouterId + ";" + linkStateId + ";" + age + ";" + checksum;
     }
+
+    public static NetworkLSA fromString(String s) {
+        String[] parts = s.split(";");
+        return new NetworkLSA(parts[0], parts[1], Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
+    }
+
+
+
 
     public void addAttachedRouter(String neighborId) {
         attachedRouters.add(neighborId);

@@ -1,10 +1,11 @@
 package ospf;
 
 import constants.LinkType;
-import constants.NeighborState;
 import constants.RouterRole;
 import handlers.PacketHandler;
 import lsas.*;
+import packets.*;
+
 import java.net.*;
 import java.io.*;
 
@@ -53,7 +54,7 @@ public class Router {
                     socket.receive(packet);
 
                     String msg = new String(packet.getData(), 0, packet.getLength());
-                    handlePacket(msg);
+                    handlePacket(msg, packet.getAddress(), packet.getPort());
                 } catch (IOException e) {
                     System.out.println("[" + routerId + "] Error receiving packet: " + e.getMessage());
                 }
@@ -61,34 +62,6 @@ public class Router {
         });
         listenerThread.start();
     }
-
-    private void handleHelloPacket(String msg) {
-        try {
-            String[] parts = msg.split(";", -1);
-
-            if (parts.length < 3) {
-                System.out.println("[" + routerId + "] Invalid Hello format: " + msg);
-                return;
-            }
-
-            String senderId = parts[0];
-            int priority = Integer.parseInt(parts[1]);
-
-            List<String> theirNeighbors = new ArrayList<>();
-            if (parts.length > 2 && !parts[2].isBlank()) {
-                theirNeighbors = Arrays.asList(parts[2].split(","));
-            }
-
-            System.out.println("[" + routerId + "] Received Hello from " + senderId + " with neighbors: " + theirNeighbors);
-
-            receiveHello(senderId, priority, theirNeighbors);
-
-        } catch (Exception e) {
-            System.out.println("[" + routerId + "] Failed to parse Hello: " + msg);
-            e.printStackTrace();
-        }
-    }
-
 
     public String getRouterId() {
         return routerId;
@@ -154,7 +127,7 @@ public class Router {
         return roles;
     }
 
-    private void handlePacket(String msg) {
+    private void handlePacket(String msg, InetAddress address, int port) {
         try {
             String[] parts = msg.split(";", 2);
             if (parts.length < 2) {
@@ -165,9 +138,38 @@ public class Router {
             String type = parts[0];
             String payload = parts[1];
 
+            OSPFPacket packet = null;
+
             switch (type) {
                 case "HELLO":
-                    handleHelloPacket(payload);
+                    HelloPacket hello = HelloPacket.deserialize(payload);
+                    hello.setSenderPort(port);
+                    hello.setSenderIp(address.getHostAddress());
+                    packet = hello;
+                    break;
+                case "DATABASE_DESCRIPTION":
+                    DBDescPacket dbd = DBDescPacket.deserialize(payload);
+                    dbd.setSenderPort(port);
+                    dbd.setSenderIp(address.getHostAddress());
+                    packet = dbd;
+                    break;
+                case "LINK_STATE_REQUEST":
+                    LSRequestPacket lsr = LSRequestPacket.deserialize(payload);
+                    lsr.setSenderPort(port);
+                    lsr.setSenderIp(address.getHostAddress());
+                    packet = lsr;
+                    break;
+                case "LINK_STATE_UPDATE":
+                    LSUpdatePacket lsu = LSUpdatePacket.deserialize(payload);
+                    lsu.setSenderPort(port);
+                    lsu.setSenderIp(address.getHostAddress());
+                    packet = lsu;
+                    break;
+                case "LINK_STATE_ACK":
+                    LSAckPacket lack = LSAckPacket.deserialize(payload);
+                    lack.setSenderPort(port);
+                    lack.setSenderIp(address.getHostAddress());
+                    packet = lack;
                     break;
                 case "ROUTER_LSA":
                     // TODO: implement later
@@ -181,6 +183,9 @@ public class Router {
                 default:
                     System.out.println("[" + routerId + "] Unknown packet type: " + type);
             }
+            if (packet != null) {
+                packet.process(this);
+            }
 
         } catch (Exception e) {
             System.out.println("[" + routerId + "] Error handling packet: " + msg);
@@ -192,15 +197,19 @@ public class Router {
     public void sendHello(Map<String, Integer> neighborAddresses) {
         System.out.println("[" + routerId + "] Sending Hello packets...");
         List<String> knownNeighborIds = new ArrayList<>(neighbors.keySet());
-        String payload = routerId + ";1;" + String.join(",", knownNeighborIds);
-        String msg = "HELLO;" + payload;
+        HelloPacket hello = new HelloPacket(
+                (short) 0, 0, 0, "localhost", "localhost",
+                null, routerId, (byte) 1, knownNeighborIds
+        );
+
+        byte[] data = ("HELLO;" + new String(hello.serialize())).getBytes();
 
         for (Map.Entry<String, Integer> entry : neighborAddresses.entrySet()) {
             try {
+                if (entry.getKey().equals(routerId)) continue;
                 String targetIp = "localhost";
                 int targetPort = entry.getValue();
 
-                byte[] data = msg.getBytes();
                 DatagramPacket packet = new DatagramPacket(
                         data, data.length, InetAddress.getByName(targetIp), targetPort
                 );
@@ -210,31 +219,6 @@ public class Router {
             } catch (IOException e) {
                 System.out.println("[" + routerId + "] Error sending Hello to " + entry.getKey());
             }
-        }
-    }
-
-    public void receiveHello(String neighborId, int priority, List<String> theirKnownNeighbors) {
-        Neighbor neighbor = neighbors.get(neighborId);
-
-        if(neighborId.equals(this.routerId)) return;
-
-        if (neighbor == null) {
-            neighbor = new Neighbor(neighborId, priority);
-            neighbors.put(neighborId, neighbor);
-            System.out.println("[" + routerId + "] Discovered new neighbor: " + neighborId);
-        } else {
-            neighbor.setPriority(priority);
-            System.out.println("[" + routerId + "] Updated priority for neighbor " + neighborId);
-        }
-
-        neighbor.updateHelloTimestamp();
-
-        if (theirKnownNeighbors.contains(this.routerId)) {
-            neighbor.setState(NeighborState.TWO_WAY);
-            System.out.println("[" + routerId + "] TWO_WAY with " + neighborId);
-        } else {
-            neighbor.setState(NeighborState.INIT);
-            System.out.println("[" + routerId + "] INIT with " + neighborId);
         }
     }
 
