@@ -63,46 +63,48 @@ public class HelloPacket extends OSPFPacket {
             router.getNeighbors().put(senderId, neighbor);
             neighbor.setAddress(getSourceIp(), getSenderPort());
             System.out.println("[" + router.getRouterId() + "] Discovered new neighbor: " + senderId);
+            router.sendHelloTo(senderId);
         } else {
             neighbor.setPriority(priority);
             System.out.println("[" + router.getRouterId() + "] Updated priority for neighbor " + senderId);
         }
 
         neighbor.updateHelloTimestamp();
+        if (!neighbor.getState().equals(constants.NeighborState.TWO_WAY)) {
+            if (knownNeighbors.contains(router.getRouterId())) {
+                neighbor.setState(constants.NeighborState.TWO_WAY);
+                System.out.println("[" + router.getRouterId() + "] TWO_WAY with " + senderId);
 
-        if (knownNeighbors.contains(router.getRouterId())) {
-            neighbor.setState(constants.NeighborState.TWO_WAY);
-            System.out.println("[" + router.getRouterId() + "] TWO_WAY with " + senderId);
+                router.generateRouterLSA();
 
-            router.generateRouterLSA();
+                List<LSAHeader> headers = new ArrayList<>();
+                for (LSA lsa : router.getLsdb().getAllLSAs().values()) {
+                    headers.add(new LSAHeader(lsa));
+                }
 
-            List<LSAHeader> headers = new ArrayList<>();
-            for (LSA lsa : router.getLsdb().getAllLSAs().values()) {
-                headers.add(new LSAHeader(lsa));
-            }
-
-            DBDescPacket dbDesc = new DBDescPacket(
-                    (short) 0, 0, 0,
-                    router.getRouterId(), senderId,
-                    null, headers
-            );
-
-            byte[] data = ("DATABASE_DESCRIPTION;" + new String(dbDesc.serialize())).getBytes();
-
-            try {
-                DatagramPacket packet = new DatagramPacket(
-                        data, data.length,
-                        InetAddress.getByName(getSourceIp()),
-                        getSenderPort()
+                DBDescPacket dbDesc = new DBDescPacket(
+                        (short) 0, 0, 0,
+                        router.getRouterId(), senderId,
+                        null, headers
                 );
-                router.getSocket().send(packet);
-                System.out.println("[" + router.getRouterId() + "] Sent DBDesc to " + senderId);
-            } catch (Exception e) {
-                e.printStackTrace();
+
+                byte[] data = ("DATABASE_DESCRIPTION;" + new String(dbDesc.serialize())).getBytes();
+
+                try {
+                    DatagramPacket packet = new DatagramPacket(
+                            data, data.length,
+                            InetAddress.getByName(getSourceIp()),
+                            getSenderPort()
+                    );
+                    router.getSocket().send(packet);
+                    System.out.println("[" + router.getRouterId() + "] Sent DBDesc to " + senderId);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                neighbor.setState(constants.NeighborState.INIT);
+                System.out.println("[" + router.getRouterId() + "] INIT with " + senderId);
             }
-        } else {
-            neighbor.setState(constants.NeighborState.INIT);
-            System.out.println("[" + router.getRouterId() + "] INIT with " + senderId);
         }
     }
 

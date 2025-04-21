@@ -1,7 +1,11 @@
 package testing;
 
+import constants.AreaType;
 import constants.LinkType;
+import helpers.RoutingEntry;
+import ospf.Area;
 import ospf.Interface;
+import ospf.LSDB;
 import ospf.Router;
 import lsas.RouterLSA;
 
@@ -12,49 +16,72 @@ public class OSPFTest {
     public static void main(String[] args) throws Exception {
         Router r1 = new Router("1.1.1.1");
         Router r2 = new Router("2.2.2.2");
-        Router r3 = new Router("3.3.3.3");
+        Router r3 = new Router("3.3.3.3"); // Transit router
 
-        r1.initializeSocket(5001);
-        r2.initializeSocket(5002);
-        r3.initializeSocket(5003);
+        LSDB sharedDb = new LSDB();
+        Area area0_r1 = new Area("0", AreaType.STUB, sharedDb);
+        Area area0_r2 = new Area("0", AreaType.STUB, sharedDb);
+        Area area0_r3 = new Area("0", AreaType.STUB, sharedDb);
 
-        Interface i1 = new Interface(r1, LinkType.TRANSIT, "eth0", "10.0.0.1", "10.0.0.0/24", "0", 10);
-        Interface i2 = new Interface(r2, LinkType.TRANSIT, "eth0", "10.0.0.2", "10.0.0.0/24", "0", 10);
-        Interface i3 = new Interface(r3, LinkType.TRANSIT, "eth0", "10.0.0.3", "10.0.0.0/24", "0", 10);
+        Interface i1_r1 = new Interface(r1, LinkType.POINT_TO_POINT, "i1", "10.0.0.1", "10.0.0.0/30", "0", 10);
+        Interface i1_r2 = new Interface(r2, LinkType.POINT_TO_POINT, "i1", "10.0.0.2", "10.0.0.0/30", "0", 10);
 
-        r1.addInterface(i1);
-        r2.addInterface(i2);
-        r3.addInterface(i3);
+        Interface i2_r2 = new Interface(r2, LinkType.TRANSIT, "i2", "10.0.1.1", "10.0.1.0/24", "0", 5);
+        Interface i1_r3 = new Interface(r3, LinkType.TRANSIT, "i1", "10.0.1.2", "10.0.1.0/24", "0", 5);
 
-        i1.connectTo(i2, 1);
-        i1.connectTo(i3, 1);
-        i2.connectTo(i1, 1);
-        i2.connectTo(i3, 1);
-        i3.connectTo(i1, 1);
-        i3.connectTo(i2, 1);
+        area0_r1.addInterface(i1_r1);
+        area0_r2.addInterface(i1_r2);
+        area0_r2.addInterface(i2_r2);
+        area0_r3.addInterface(i1_r3);
+
+        r1.addInterface(i1_r1);
+        r2.addInterface(i1_r2);
+        r2.addInterface(i2_r2);
+        r3.addInterface(i1_r3);
+
+        area0_r1.getRouters().add(r1);
+        area0_r2.getRouters().add(r2);
+        area0_r3.getRouters().add(r3);
+
+        i1_r1.connectTo(i1_r2, 1);
+        i1_r2.connectTo(i1_r1, 1);
+        i2_r2.connectTo(i1_r3, 1);
+        i1_r3.connectTo(i2_r2, 1);
+
+        i2_r2.electDR();
+        i1_r3.electDR();
+
+        r1.initializeSocket(10001);
+        r2.initializeSocket(10002);
+        r3.initializeSocket(10003);
+
+        Map<String, Integer> ports = new HashMap<>();
+        ports.put("2.2.2.2", 10001);
+        ports.put("3.3.3.3", 10002);
+        ports.put("1.1.1.1", 10003);
+
+        r1.sendHello(ports);
+        r2.sendHello(ports);
+        r3.sendHello(ports);
+
+        Thread.sleep(5000);
+
 
         r1.generateRouterLSA();
         r2.generateRouterLSA();
         r3.generateRouterLSA();
 
-        Map<String, Integer> ports = new HashMap<>();
-        ports.put("1.1.1.1", 5001);
-        ports.put("2.2.2.2", 5002);
-        ports.put("3.3.3.3", 5003);
+        Thread.sleep(5000);
 
-        System.out.println(" Starting Hello exchange...");
-        r1.sendHello(ports);
-        r2.sendHello(ports);
-        r3.sendHello(ports);
+        area0_r1.recomputeRoutes();
+        area0_r2.recomputeRoutes();
+        area0_r3.recomputeRoutes();
 
-        Thread.sleep(2000);
+        Thread.sleep(5000);
 
-        System.out.println("DBDesc packets will auto-fire after TWO_WAY from inside HelloPacket.process()");
-        System.out.println(" LSRequest + LSUpdate should follow if any LSAs are missing.");
-
-        Thread.sleep(10000);
-
-        System.out.println("✅ Simulation done.");
-        System.exit(0);
+        System.out.println("ROUTING TABLES: ");
+        area0_r1.printAllRoutingTables();
+        area0_r2.printAllRoutingTables();
+        area0_r3.printAllRoutingTables();
     }
 }

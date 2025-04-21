@@ -1,8 +1,11 @@
 package ospf;
 
+import algorithms.Dijkstra;
 import constants.LinkType;
 import constants.RouterRole;
 import handlers.PacketHandler;
+import helpers.RoutingEntry;
+import helpers.WeightedGraph;
 import lsas.*;
 import packets.*;
 
@@ -63,6 +66,10 @@ public class Router {
         listenerThread.start();
     }
 
+    void assignArea(String areaId) {
+        this.areas.add(areaId);
+    }
+
     public String getRouterId() {
         return routerId;
     }
@@ -79,7 +86,7 @@ public class Router {
         return interfaces;
     }
 
-    public Map<String, Neighbor> getNeighbors() {
+    public synchronized Map<String, Neighbor> getNeighbors() {
         return neighbors;
     }
 
@@ -103,7 +110,7 @@ public class Router {
         connectedPrefixes.add(prefix);
     }
 
-    public void addInterface(Interface intface) {
+    public synchronized void addInterface(Interface intface) {
         interfaces.add(intface);
         areas.add(intface.getAreaId());
     }
@@ -239,6 +246,14 @@ public class Router {
     public void generateRouterLSA() {
         System.out.println("[" + routerId + "] Generating Router LSA...");
         RouterLSA routerLSA = new RouterLSA(routerId, routerId, 0, 0);
+
+        for (Interface iface : interfaces) {
+            Area area = iface.getArea();
+            if (area != null) {
+                area.installLSA(routerLSA);
+            }
+        }
+
         originateLSA(routerLSA);
     }
 
@@ -259,6 +274,60 @@ public class Router {
                 NetworkLSA lsa = new NetworkLSA(routerId, iface.getIpAddress(), 0, 0);
                 originateLSA(lsa);
             }
+        }
+    }
+
+
+    private String getInterfaceTo(String nextHopId) {
+        for (Interface iface : interfaces) {
+            if (iface.getConnectedRouterId().equals(nextHopId)) {
+                return iface.getInterfaceId();
+            }
+        }
+        return null;
+    }
+
+
+    public void recomputeRoutes(WeightedGraph graph, String localRouterId) {
+        Map<String, String> previousHop = new HashMap<>();
+        Map<String, Integer> distances = Dijkstra.computeShortestPaths(graph, localRouterId, previousHop);
+
+        routingTable.clear();
+
+        for (String destId : distances.keySet()) {
+            if (destId.equals(localRouterId)) continue;
+
+            int cost = distances.get(destId);
+
+            String nextHop = Dijkstra.getNextHop(localRouterId, destId, previousHop);
+            String outInterface = getInterfaceTo(nextHop);
+            RoutingEntry entry = new RoutingEntry(destId, nextHop, outInterface, cost);
+            routingTable.addEntry(entry);
+        }
+    }
+
+    public void sendHelloTo(String neighborId) {
+        Neighbor neighbor = neighbors.get(neighborId);
+        if (neighbor == null) return;
+
+        List<String> knownNeighborIds = new ArrayList<>(neighbors.keySet());
+        HelloPacket hello = new HelloPacket(
+                (short) 0, 0, 0, "localhost", "localhost",
+                null, routerId, (byte) 1, knownNeighborIds
+        );
+
+        byte[] data = ("HELLO;" + new String(hello.serialize())).getBytes();
+
+        try {
+            DatagramPacket packet = new DatagramPacket(
+                    data, data.length,
+                    InetAddress.getByName(neighbor.getIpAddress()),
+                    neighbor.getPort()
+            );
+            socket.send(packet);
+            System.out.println("[" + routerId + "] Re-sent Hello to " + neighborId);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

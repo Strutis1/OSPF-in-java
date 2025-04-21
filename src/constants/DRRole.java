@@ -3,5 +3,4 @@ package constants;
 public enum DRRole {
     DR,
     BDR,
-    DROTHER
 }

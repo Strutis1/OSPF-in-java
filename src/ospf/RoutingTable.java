@@ -21,5 +21,9 @@ public class RoutingTable {
         return entryMap.values();
     }
 
+    public void clear(){
+        entryMap.clear();
+    }
+
 
 }

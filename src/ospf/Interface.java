@@ -28,6 +28,10 @@ public class Interface {
     private String drId = null;
     private String bdrId = null;
 
+    private String connectedRouterId;
+
+    private Area area;
+
 
     public Interface(Router owner, LinkType type, String interfaceId, String ipAddress, String prefix, String areaId, int cost) {
         this.owner = owner;
@@ -42,8 +46,10 @@ public class Interface {
         this.neighbors = new ArrayList<>();
     }
 
-
+//Was for testing
     public void connectTo(Interface other, int priority) {
+        this.connectedRouterId = other.getOwner().getRouterId();
+        other.connectedRouterId = this.owner.getRouterId();
         Neighbor neighbor = new Neighbor(other.owner.getRouterId(), priority);
         this.neighbors.add(neighbor);
         System.out.println("[" + this.interfaceId + "] Connected to neighbor " + other.owner.getRouterId());
@@ -76,6 +82,14 @@ public class Interface {
         bdrId = candidates.size() > 1 ? candidates.get(1).routerId : null;
 
         System.out.println("[" + interfaceId + "] DR elected: " + drId + ", BDR elected: " + bdrId);
+    }
+
+    public void setArea(Area area) {
+        this.area = area;
+    }
+
+    public Area getArea() {
+        return this.area;
     }
 
     public boolean isDR(String routerId) {
@@ -153,4 +167,7 @@ public class Interface {
         electDR();
     }
 
+    public String getConnectedRouterId() {
+        return connectedRouterId;
+    }
 }

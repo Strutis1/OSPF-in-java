@@ -2,6 +2,7 @@ package helpers;
 
 import constants.LinkType;
 import ospf.Link;
+import ospf.Router;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +14,7 @@ public class WeightedGraph {
     Map<String, GraphNode> nodes;
 
 
-    public WeightedGraph(int n) {
+    public WeightedGraph() {
         adjacencyList = new HashMap<>();
         nodes = new HashMap<>();
     }
@@ -37,11 +38,20 @@ public class WeightedGraph {
     public void addEdge(String from, String to, int weight) {
         adjacencyList.putIfAbsent(from, new ArrayList<>());
         adjacencyList.get(from).add(new Link(to, weight, LinkType.POINT_TO_POINT));
+
+        addNode(from);
+        addNode(to);
+
+        GraphNode fromNode = nodes.get(from);
+        GraphNode toNode = nodes.get(to);
+        fromNode.addNeighbor(toNode, weight);
     }
 
+    public GraphNode getNodeById(String id) {
+        return nodes.get(id);
+    }
 
-    //we get neighbors id's
-    public String[] getNeighbors(GraphNode node) {
-        return node.getRouter().getNeighbors().keySet().toArray(new String[0]);
+    public void addNode(String id) {
+        nodes.putIfAbsent(id, new GraphNode(id));
     }
 }

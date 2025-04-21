@@ -1,11 +1,9 @@
 package ospf;
 
 import constants.LSAType;
+import constants.OSPFDefaults;
 import helpers.LSAKey;
-import lsas.LSA;
-import lsas.NetworkLSA;
-import lsas.RouterLSA;
-import lsas.SummaryLSA;
+import lsas.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +23,7 @@ public class LSDB {
         this.database = new HashMap<>();
     }
 
-    public void addOrUpdateLSA(LSA lsa) {
+    public synchronized void addOrUpdateLSA(LSA lsa) {
         LSAKey key = new LSAKey(lsa.getType(), lsa.getLinkStateId(), lsa.getAdvertisingRouterId());
         LSA existing = database.get(key);
 
@@ -43,7 +41,7 @@ public class LSDB {
     }
 
 
-    public void removeLSA(LSA lsa) {
+    public synchronized void removeLSA(LSA lsa) {
         LSAKey key = new LSAKey(lsa.getType(), lsa.getLinkStateId(), lsa.getAdvertisingRouterId());
         database.remove(key);
         routerLSAs.remove(key);
@@ -51,15 +49,15 @@ public class LSDB {
         summaryLSAs.remove(key);
     }
 
-    public List<RouterLSA> getAllRouterLSAs() {
+    public synchronized List<RouterLSA> getAllRouterLSAs() {
         return new ArrayList<>(routerLSAs.values());
     }
 
-    public List<NetworkLSA> getAllNetworkLSAs() {
+    public synchronized List<NetworkLSA> getAllNetworkLSAs() {
         return new ArrayList<>(networkLSAs.values());
     }
 
-    public List<SummaryLSA> getAllSummaryLSAs() {
+    public synchronized List<SummaryLSA> getAllSummaryLSAs() {
         return new ArrayList<>(summaryLSAs.values());
     }
 
@@ -79,7 +77,7 @@ public class LSDB {
         }
     }
 
-    public LSA getLSA(LSAType type, String linkStateId, String advRouterId) {
+    public synchronized LSA getLSA(LSAType type, String linkStateId, String advRouterId) {
         return database.get(new LSAKey(type, linkStateId, advRouterId));
     }
 
@@ -87,8 +85,35 @@ public class LSDB {
         return database;
     }
 
+    public List<LSAHeader> getHeaders() {
+        return database.values().stream()
+                .map(LSAHeader::new)
+                .toList();
+    }
+
+
     public boolean containsLSA(LSA lsa) {
         LSAKey key = new LSAKey(lsa.getType(), lsa.getLinkStateId(), lsa.getAdvertisingRouterId());
         return database.containsKey(key);
+    }
+
+
+    public synchronized void ageOutOldLSAs() {
+        List<LSAKey> toRemove = new ArrayList<>();
+        long now = System.currentTimeMillis();
+
+        for (Map.Entry<LSAKey, LSA> entry : database.entrySet()) {
+            if (entry.getValue().getAge() >= OSPFDefaults.MAX_AGE) {
+                toRemove.add(entry.getKey());
+            }
+        }
+
+        for (LSAKey key : toRemove) {
+            database.remove(key);
+            routerLSAs.remove(key);
+            networkLSAs.remove(key);
+            summaryLSAs.remove(key);
+            System.out.println("LSDB: Removed expired LSA " + key);
+        }
     }
 }

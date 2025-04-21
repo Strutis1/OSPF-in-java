@@ -27,24 +27,20 @@ public class Dijkstra {
             if (current.isVisited()) continue;
             current.setVisited(true);
 
-            String currentId = current.getRouter().getRouterId();
+            String currentId = current.getRouterId();
             distances.put(currentId, current.getDistance());
 
-            List<Link> neighbors = graph.getAdjacencyList().get(currentId);
-            if (neighbors == null) continue;
+            for (Map.Entry<GraphNode, Integer> entry : current.getNeighbors().entrySet()) {
+                GraphNode neighborNode = entry.getKey();
+                int weight = entry.getValue();
 
-            for (Link link : neighbors) {
-                String neighborId = link.getDestinationId();
-                int weight = link.getCost();
-
-                GraphNode neighborNode = graph.getNodes().get(neighborId);
-                if (neighborNode == null || neighborNode.isVisited()) continue;
+                if (neighborNode.isVisited()) continue;
 
                 int alt = current.getDistance() + weight;
                 if (alt < neighborNode.getDistance()) {
                     neighborNode.setDistance(alt);
                     neighborNode.setPrevious(current);
-                    previousHop.put(neighborId, currentId);
+                    previousHop.put(neighborNode.getRouterId(), current.getRouterId());
                     queue.add(neighborNode);
                 }
             }
@@ -65,4 +61,6 @@ public class Dijkstra {
 
         return current.equals(sourceId) ? destId : current;
     }
+
+
 }

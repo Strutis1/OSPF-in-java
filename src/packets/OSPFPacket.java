@@ -41,8 +41,6 @@ public abstract class OSPFPacket {
     public abstract byte[] serialize ();
 
 
-
-
     public void setSenderPort(int port) {
         this.senderPort = port;
     }
