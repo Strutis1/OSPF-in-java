@@ -36,7 +36,7 @@ public class DBDescPacket extends OSPFPacket{
         for (LSAHeader receivedHeader : lsaHeaders) {
             boolean found = false;
 
-            for (LSA lsa : router.getLsdb().getAllLSAs().values()) {
+            for (LSA lsa : router.getAllKnownLSAs()) {
                 if (receivedHeader.matches(lsa) &&
                         receivedHeader.getSequenceNumber() <= lsa.getSequenceNumber()) {
                     found = true;

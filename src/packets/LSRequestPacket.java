@@ -28,7 +28,7 @@ public class LSRequestPacket extends OSPFPacket{
         List<LSA> toSend = new ArrayList<>();
 
         for (LSAHeader header : requestedLSAs) {
-            for (LSA lsa : router.getLsdb().getAllLSAs().values()) {
+            for (LSA lsa : router.getAllKnownLSAs()) {
                 if (header.matches(lsa)) {
                     toSend.add(lsa);
                     break;

@@ -99,14 +99,18 @@ public class Area {
     }
 
     public void printAllRoutingTables() {
-        for (Router r : routers) {
-            System.out.println("Routing table for " + r.getRouterId() + ":");
+        Set<String> printed = new HashSet<>();
 
+        for (Router r : routers) {
+            if (printed.contains(r.getRouterId())) continue;
+
+            printed.add(r.getRouterId());
+
+            System.out.println("Routing table for " + r.getRouterId() + ":");
             for (RoutingEntry entry : r.getRoutingTable().getAllEntries()) {
                 System.out.printf("  Dest: %-10s  Next Hop: %-10s  Iface: %-6s  Cost: %d\n",
                         entry.getPrefix(), entry.getNextHopId(), entry.getOutgoingInterfaceId(), entry.getCost());
             }
-
             System.out.println();
         }
     }

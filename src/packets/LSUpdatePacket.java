@@ -3,6 +3,8 @@ package packets;
 import constants.PacketType;
 import lsas.LSA;
 import lsas.LSAHeader;
+import ospf.Area;
+import ospf.Interface;
 import ospf.Router;
 
 import java.util.ArrayList;
@@ -25,9 +27,20 @@ public class LSUpdatePacket extends OSPFPacket{
         System.out.println("[" + router.getRouterId() + "] Received LSUpdate with LSAs:");
         List<LSAHeader> ackHeaders = new ArrayList<>();
         for (LSA lsa : lsas) {
-            router.getLsdb().addOrUpdateLSA(lsa);
-            System.out.println(" -> Installed: " + lsa.getLinkStateId());
-            ackHeaders.add(new LSAHeader(lsa));
+            boolean installed = false;
+
+            for (Interface iface : router.getInterfaces()) {
+                Area area = iface.getArea();
+                if (area != null) {
+                    area.installLSA(lsa);
+                    installed = true;
+                }
+            }
+
+            if (installed) {
+                System.out.println(" -> Installed: " + lsa.getLinkStateId());
+                ackHeaders.add(new LSAHeader(lsa));
+            }
         }
         if (!ackHeaders.isEmpty()) {
             LSAckPacket.sendAck(router, getSenderIp(), getSenderPort(), ackHeaders);

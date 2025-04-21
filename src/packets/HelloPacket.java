@@ -78,7 +78,7 @@ public class HelloPacket extends OSPFPacket {
                 router.generateRouterLSA();
 
                 List<LSAHeader> headers = new ArrayList<>();
-                for (LSA lsa : router.getLsdb().getAllLSAs().values()) {
+                for (LSA lsa : router.getAllKnownLSAs()) {
                     headers.add(new LSAHeader(lsa));
                 }
 

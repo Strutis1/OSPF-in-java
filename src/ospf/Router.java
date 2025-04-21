@@ -21,7 +21,6 @@ public class Router {
     private final List<String> connectedPrefixes;
     private final List<Interface> interfaces;
     private final Map<String, Neighbor> neighbors;
-    private final LSDB lsdb;
     private final RoutingTable routingTable;
     private final Set<String> areas;    // Areas this router participates in
 
@@ -35,7 +34,6 @@ public class Router {
         this.connectedPrefixes = new ArrayList<>();
         this.interfaces = new ArrayList<>();
         this.neighbors = new HashMap<>();
-        this.lsdb = new LSDB();
         this.routingTable = new RoutingTable();
         this.areas = new HashSet<>();
     }
@@ -90,9 +88,6 @@ public class Router {
         return neighbors;
     }
 
-    public LSDB getLsdb() {
-        return lsdb;
-    }
 
     public RoutingTable getRoutingTable() {
         return routingTable;
@@ -234,7 +229,12 @@ public class Router {
     public void originateLSA(LSA lsa) {
         lsa.prepare(this);
 
-        lsdb.addOrUpdateLSA(lsa);
+        for (Interface iface : interfaces) {
+            Area area = iface.getArea();
+            if (area != null) {
+                area.installLSA(lsa);
+            }
+        }
 
         if (packetHandler != null) {
             packetHandler.floodLSA(this, lsa);
@@ -285,6 +285,17 @@ public class Router {
             }
         }
         return null;
+    }
+
+    public Collection<LSA> getAllKnownLSAs() {
+        Set<LSA> all = new HashSet<>();
+        for (Interface iface : interfaces) {
+            Area area = iface.getArea();
+            if (area != null) {
+                all.addAll(area.getLSDB().getAllLSAs().values());
+            }
+        }
+        return all;
     }
 
 
